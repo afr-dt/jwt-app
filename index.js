@@ -6,12 +6,20 @@ const app = express();
 const passport = require('passport');
 const passportJWT = require('passport-jwt');
 const JwtStrategy = passportJWT.Strategy;
-const ExtractJWT = passportJWT.ExtractJWT;
+const ExtractJwt = passportJWT.ExtractJwt;
 
-const options = {
-  jwtFromRequest: ExtractJWT.fromAuthHeaderASBearerToken(),
+const opts = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: process.env.SECRET_OR_KEY
 };
+
+const strategy = new JwtStrategy(opts, (payload, next) => {
+  // GET user from DB
+  const user = null;
+  next(null, user);
+});
+passport.use(strategy);
+app.use(passport.initialize());
 
 app.get('/', (req, res) => {
   res.send('J W T');
