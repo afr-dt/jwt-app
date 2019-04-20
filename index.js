@@ -16,8 +16,8 @@ const knexDb = knex({
 const bookshelf = require('bookshelf');
 const securePassword = require('bookshelf-secure-password');
 const db = bookshelf(knexDb);
-
 db.plugin(securePassword);
+const jwt = require('jsonwebtoken');
 
 const User = db.Model.extend({
   tableName: 'users',
@@ -47,25 +47,55 @@ app.use(
 );
 app.use(bodyParser.json());
 
-app.post('/seedUser', (req, res) => {
+app.post('/sendUser', (req, res) => {
   if (!req.body.email || !req.body.password) {
-    return res.status(401).send('no fields');
+    return res.status(401).send('Ningun usuario');
   }
 
   console.log(req.body);
-
   const user = new User({
     email: req.body.email,
     password: req.body.password
   });
-
   user.save().then(() => {
     res.send('ok');
   });
 });
 
 app.get('/', (req, res) => {
-  res.send('J W T');
+  res.send('J W T App');
+});
+
+app.get(
+  '/protected',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    res.send('Url protegido!!!');
+  }
+);
+
+app.post('/getToken', (req, res) => {
+  console.log(req.body);
+  if (!req.body.email || !req.body.password) {
+    return res.status(401).send('No se enviaron datos!!!');
+  }
+  User.forge({ email: req.body.email })
+    .fetch()
+    .then(result => {
+      if (!result) {
+        return res.status(400).send('No se ha encontrado el usuario!!!');
+      }
+      result
+        .authenticate(req.body.password)
+        .then(user => {
+          const payload = { id: user.id };
+          const token = jwt.sign(payload, process.env.SECRET_OR_KEY);
+          res.send(token);
+        })
+        .catch(err => {
+          res.status(401).send({ err: err });
+        });
+    });
 });
 
 const PORT = process.env.PORT || 3000;
