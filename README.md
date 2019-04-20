@@ -18,5 +18,3 @@
 #### And finally to run the app
 
 `yarn start`
-or
-`nmp start`
